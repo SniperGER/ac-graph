@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>test</title>
+		<script src="js/head.built.js"></script>
+		<script src="graph.js"></script>
+	</head>
+	<body>
+		<div class="chart" style="width: 418px; height: 240px"></div>
+		<script>
+			window.player = [];
+		</script>
+		<script src="js/performance.built.js"></script>
+		<script>
+			var demo_options = {
+				selector: window.ACBaseElement.select(".chart"),
+				options: {
+					graphData: [
+						{
+							y: 0.05
+						},
+
+						{
+							y: 1.0
+						}
+					],
+					splineColorEnd: "rgb(21, 137, 201)",
+					splineColorStart: "rgb(149, 202, 82)",
+				}
+			}
+			var demo = new AppleGrapher([demo_options])
+		</script>
+	</body>
+</html>
