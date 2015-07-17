@@ -7,10 +7,10 @@ Support for labels will follow soon!
 ## Prerequisites
 You need two Apple Scripts for this to work:
 
-* `head.built.js` available [http://images.apple.com/v/ipad-air-2/a/scripts/head.built.js]here
-* `performance.built.js` available [http://images.apple.com/v/ipad-air-2/b/scripts/performance.built.js]here
+* `head.built.js` available [here](http://images.apple.com/v/ipad-air-2/a/scripts/head.built.js)
+* `performance.built.js` available [here])http://images.apple.com/v/ipad-air-2/b/scripts/performance.built.js)
 
-Both scripts consist of modules, so you need a non-minified version of `performance.built.js`. If the code is compressed, insert it into [http://jsbeautifier.org]jsbeautifier.org to make it readable. If you are using Safari, it is possible that you already have a uncompressed version if "Source Code Formatting" is switched on.
+Both scripts consist of modules, so you need a non-minified version of `performance.built.js`. If the code is compressed, insert it into [jsbeautifier.org](http://jsbeautifier.org) to make it readable. If you are using Safari, it is possible that you already have a uncompressed version if "Source Code Formatting" is switched on.
 
 It is recommended you save both scripts locally. Leave `head.built.js` alone.
 
