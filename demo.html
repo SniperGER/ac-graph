@@ -2,33 +2,86 @@
 <html>
 	<head>
 		<title>test</title>
-		<script src="js/head.built.js"></script>
-		<script src="graph.js"></script>
+		<script src="js/AppleGrapher.min.js"></script>
+		<link rel="stylesheet" href="AppleGrapher.css">
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				font-family: sans-serif;
+				font-family: "Myriad Set Pro","Lucida Grande","Helvetica Neue","Helvetica","Arial","Verdana","sans-serif";
+			}
+			body {
+				padding-left: 60px;
+				text-align: center;
+			}
+		</style>
 	</head>
 	<body>
-		<div class="chart" style="width: 418px; height: 240px"></div>
+		<div class="chart chart1" style="width: 418px; height: 240px">
+			<ul class="axis-labels" role="presentation">
+				<li class="first">iPad</li>
+				<li class="second">iPad&nbsp;2</li>
+				<li class="third">iPad<br>(3rd&nbsp;gen.)</li>
+				<li class="fourth">iPad<br>(4th&nbsp;gen.)</li>
+				<li class="fifth">iPad Air</li>
+				<li class="sixth">iPad Air 2</li>
+			</ul>
+		</div>
+		<div class="donut chart2" id="donut-graphs" style="width: 235px; height: 235px;">
+			<ul class="axis-labels" role="presentation">
+				<li class="first">iPad</li>
+				<li class="second">iPad&nbsp;2</li>
+				<li class="third">iPad<br>(3rd&nbsp;gen.)</li>
+				<li class="fourth">iPad<br>(4th&nbsp;gen.)</li>
+				<li class="fifth">iPad Air</li>
+				<li class="sixth">iPad Air 2</li>
+			</ul>
+			<div class="donut-label">
+				<span class="label">0</span>
+			</div>
+		</div>
+		
 		<script>
-			window.player = [];
-		</script>
-		<script src="js/performance.built.js"></script>
-		<script>
-			var demo_options = {
-				selector: window.ACBaseElement.select(".chart"),
+			var demo_options_curvedLine_cpu = {
+				type: "curvedLine",
+				selector: document.querySelector(".chart1"),
 				options: {
-					graphData: [
-						{
-							y: 0.05
-						},
 
-						{
-							y: 1.0
-						}
-					],
+					graphData: ipad_cpu,
 					splineColorEnd: "rgb(21, 137, 201)",
 					splineColorStart: "rgb(149, 202, 82)",
 				}
+			};
+			var demo_options_curvedLine_gpu = {
+				type: "curvedLine",
+				selector: document.querySelector(".chart2"),
+				options: {
+					graphData: ipad_gpu,
+					splineColorStart: "rgb(251, 236, 62)",
+					splineColorEnd: "rgb(238, 91, 47)",
+				}
+			};
+
+			var demo_options_donut = {
+				type: "donut",
+				selector: document.querySelector(".chart2"),
+				options: {
+					bgAnimate: false,
+					bgPercent: 1,
+					bgColor: "#f5f5f5",
+					delay: 0,
+					duration: 1,
+					percent: 0.87,
+					fillColor: "rgb(238, 91, 47)",
+					label: document.querySelector(".chart2 span.label"),
+					easing: "easeInOutExpo",
+					size: 235,
+					lineWidth: 8
+				}
 			}
-			var demo = new AppleGrapher([demo_options])
+
+			var demo = new AppleGrapher([demo_options_curvedLine_cpu, demo_options_donut]);
 		</script>
 	</body>
 </html>
