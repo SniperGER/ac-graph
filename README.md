@@ -86,7 +86,7 @@ Example data is included in the variables `ipad_cpu` and `ipad_gpu`.
 | bgColor   | String      | Set the background color. HEX and RGB allowed                          | "#CCC"        |
 | delay     | float       | Wait for the specified time before the animation begins                | 0             |
 | duration  | float       | Set the duration of the animation                                      | 0             |
-| percent   | float       | Set the total radial progress for the foreground ring                  | 1.0           |
+| fillPercent   | float       | Set the total radial progress for the foreground ring                  | 1.0           |
 | fillColor | String      | Set the foreground color. HEX and RGB allowed                          | "#CCC"        |
 | label     | HTMLElement | Specifies an optional label that shows the progress as a numeric value | null          |
 | size      | integer     | Sets the canvas width and height.                                      | 235           |
