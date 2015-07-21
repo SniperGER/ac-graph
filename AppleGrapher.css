@@ -1,54 +1,51 @@
 div.chart {
 	position: relative;
-	margin: 20px 100px 50px 0px;
 	display: inline-block;
+	margin: 50px 54px 50px;
+}
+div.chart.labels {
+	margin-bottom: 90px;
 }
 div.chart ul.axis-labels {
-    display: -webkit-flex;
-    display: flex;
-    -webkit-justify-content: space-between;
-    justify-content: space-between;
 	position: absolute;
-	top: 240px;
-	left: -30px;
-	width: 478px;
 	margin: 0;
 	padding: 0;
-	text-align: justify;
 	white-space: nowrap;
+	height: 40px;
 }
 div.chart ul.axis-labels li {
 	-webkit-transition-property: opacity, left;
 	transition-property: opacity, left;
 	-webkit-transition-duration: 0.3s;
 	transition-duration: 0.3s;
-	-webkit-transform: translate3d(0, 0, 0);
-	-ms-transform: translate3d(0, 0, 0);
-	transform: translate3d(0, 0, 0);
 
 	list-style: none;
-	display: inline-block;
-	white-space: normal;
 	line-height: 20px;
 	font-size: 14px;
-	max-width: 60px;
+
 	text-align: center;
 	white-space: nowrap;
+	position: absolute;
 	opacity: 0;
-	width: 60px;
 	font-weight: normal;
-
 }
-
 div.chart.play ul.axis-labels li {
 	opacity: 1 !important;
 }
+@media all and (max-width: 414px) {
+	div.chart, div.chart canvas {
+		max-width: 288px;
+		width: 288px !important;
+	}
+	div.chart ul.axis-labels li {
+		font-size: 12px;
+	}
+}
 
 div.donut {
-	position: relative;
-	margin: 20px 100px 50px 0px;
 	display: inline-block;
-
+	position: relative;
+	margin: 50px 20px 50px;
 }
 div.donut div.donut-label {
 	position: absolute;
@@ -56,18 +53,26 @@ div.donut div.donut-label {
 	height: 100%;
 }
 div.donut div.donut-label span.label {
-	line-height: 235px;
+	line-height: 200px;
 	font-size: 79px;
 	text-align: center;
+	display: block;
+	font-weight: 100;
 }
-div.donut div.donut-label span.label:after {
+div.donut:not(.segmented-donut) div.donut-label span.label {
+	position: relative;
+	top: 50%;
+	margin-top: -100px;
+}
+
+div.donut:not(.segmented-donut) div.donut-label span.label:after {
 	content: '%';
 	font-size: 32px;
 	line-height: 190px;
 	font-weight: 200;
 	vertical-align: top;
 	position: relative;
-	bottom: -.2em;
+	bottom: .4em;
 }
 div.donut ul.axis-labels {
 	display: none;

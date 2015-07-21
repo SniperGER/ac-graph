@@ -1,33 +1,70 @@
 (function() {
+	var lastTime = 0;
+	var vendors = ['ms', 'moz', 'webkit', 'o'];
+	for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+		window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+		window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+								   || window[vendors[x]+'CancelRequestAnimationFrame'];
+	}
+
+	if (!window.requestAnimationFrame)
+		window.requestAnimationFrame = function(callback, element) {
+			var currTime = new Date().getTime();
+			var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+			var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+			  timeToCall);
+			lastTime = currTime + timeToCall;
+			return id;
+		};
+
+	if (!window.cancelAnimationFrame)
+		window.cancelAnimationFrame = function(id) {
+			clearTimeout(id);
+		};
+}());
+(function() {
 	window.AppleGrapher = function(items) {
 		this.graphs = [];
 
 		for (var i=0; i<items.length; i++) {
 			if (items[i].type == "curvedLine") {
-				this.graphs.push(new _AppleGrapherCurvedLine(items[i].selector, items[i].options));
-			} else if (items[i].type == "donut")  {
-				this.graphs.push(new _AppleGrapherDonut(items[i].selector, items[i].options));
+				this.graphs.push(new AppleGrapher.CurvedLine(items[i].selector, items[i].options));
+			} else if (items[i].type == "donut") {
+				this.graphs.push(new AppleGrapher.Donut(items[i].selector, items[i].options));
+			} else if (items[i].type == "segmented") {
+				this.graphs.push(new AppleGrapher.SegmentedDonut(items[i].selector, items[i].options));
 			}
-			
+
 		}
 	};
-	window._AppleGrapherCurvedLine = function(selector, options) {
+	window.AppleGrapher.CurvedLine = function(selector, options) {
 		var grapher = this;
-		
+
 		grapher.selector = selector;
 		grapher.selector_li = selector.querySelectorAll("li");
+
 		grapher.params = {
-			graphData: options.graphData || null,
-			width: options.width || 418,
-			height: options.height || 240,
-			splinewidth: options.splinewidth || 2.5,
-			splineColorStart: options.splineColorStart ? options.splineColorStart : "rgb(214,214,214)",
-			splineColorEnd: options.splineColorEnd ? options.splineColorEnd : "rgb(0,0,0)",
-			tension: options.tension || 0.6,
-			yAxisLineColor: options.yAxisLineColor || "#f5f5f5",
-			xAxisLineDotSize: options.xAxisLineDotSize || 2,
 			autoPlay: options.autoPlay || true,
-			delay: options.delay || 0
+			delay: options.delay || 0,
+			graphData: options.graphData || null,
+			tension: options.tension || 0.3,
+			splinewidth: options.splinewidth || 4.5,
+			splineColorStart: options.splineColorStart || "rgb(214,214,214)",
+			splineColorEnd: options.splineColorEnd || "rgb(0,0,0)",
+			xAxisLineWidth: options.xAxisLineWidth || 1.5,
+			xAxisLineColor: options.xAxisLineColor || "#D6D6D6",
+			xAxisLineDotColor: options.xAxisLineDotColor || "#D6D6D6",
+			xAxisLineDotSize: options.xAxisLineDotSize || Math.round(1.5 * 1.67),
+			yAxisLineWidth: options.yAxisLineWidth || 1.5,
+			yAxisLineColor: options.yAxisLineColor || "#D6D6D6",
+			yAxisLineOffset: options.yAxisLineOffset || 15,
+			shouldShowPlotPoints: options.shouldShowPlotPoints || false,
+			plotPointDotSize: options.plotPointDotSize || 4,
+			pointColor: options.pointColor || "#D6D6D6",
+			padding: options.padding || 5,
+			width: options.width || grapher.selector.offsetWidth,
+			height: options.height || grapher.selector.offsetHeight,
+			labels: options.labels || null,
 		}
 
 		for (var param in options) {
@@ -41,27 +78,67 @@
 			if (grapher.selector) {
 				var p,o;
 				grapher.graphLine = new window.ACGraphCurvedLine(grapher.selector, grapher.params);
+				grapher.selector.style.width = grapher.params.width + "px";
+				grapher.selector.style.height = grapher.params.height + "px";
+
+				grapher.setLabels();
+				window.addEventListener("orientationchange", function() {
+					grapher.setLabels();
+				});
+
 				if (!grapher.played) {
 					for (p=0, o=grapher.selector_li.length; p<o; p+=1) {
 						var s = grapher.selector_li[p];
-						//window.ACBaseElement.setVendorPrefixStyle(s,"transitionDelay", p * 100 + "ms,0");
 						s.style.webkitTransitionDelay = p * 100 + "ms,0";
+						s.style.transitionDelay = p * 100 + "ms,0";
+						s.style.mozTransitionDelay = p * 100 + "ms,0";
 					}
 					setTimeout(function() {
 						grapher.selector.classList.add("play");
-						setTimeout(function() {
-							grapher.graphLine.play();
-						}, grapher.params.delay);
-					}, 0)
+						grapher.graphLine.play();
+					}, grapher.params.delay*1000);
 					grapher.played = true;
 				}
 			}
 		}
+		grapher.setLabels = function() {
+			if (grapher.params.labels) {
+				grapher.selector.classList.add("labels");
+
+				if (grapher.selector.querySelector("ul")) {
+					var el = grapher.selector.querySelector("ul");
+					el.parentNode.removeChild(el);
+				}
+				var label_holder = document.createElement("ul");
+				var label_holder_width = (grapher.selector.offsetWidth/(grapher.params.graphData.length-1)) * grapher.params.graphData.length;
+				label_holder.className = "axis-labels";
+				label_holder.style.width = label_holder_width + "px";
+				label_holder.style.top = grapher.selector.offsetHeight + "px";
+				label_holder.style.left = -((label_holder_width/grapher.params.graphData.length)/2) + "px";
+
+				for (var i=0; i<grapher.params.labels.length; i++) {
+					var label_inner = document.createElement("li");
+					label_inner.innerHTML = grapher.params.labels[i];
+					label_inner.style.width = (grapher.selector.offsetWidth/(grapher.params.graphData.length-1)) + "px";
+					label_inner.style.left = i * (label_holder_width/grapher.params.graphData.length)+ "px";
+					label_inner.style.webkitTransitionDelay = i * 100 + "ms,0";
+					label_inner.style.transitionDelay = i * 100 + "ms,0";
+					label_inner.style.mozTransitionDelay = i * 100 + "ms,0";
+
+					label_holder.appendChild(label_inner);
+				}
+				grapher.selector.appendChild(label_holder);
+			}
+		}
+		grapher.convertToImg = function() {
+			var url = grapher.selector.querySelector("canvas").toDataURL();
+			window.location.href = url;
+		}
 		if (grapher.params.autoPlay) {
 			grapher.play();
 		}
-	}
-	window._AppleGrapherDonut = function(selector, options) {
+	};
+	window.AppleGrapher.Donut = function(selector, options) {
 		var grapher = this;
 
 		grapher.params = {
@@ -87,104 +164,190 @@
 
 		if (grapher.selector) {
 			grapher.selector.classList.add("donut");
+			grapher.selector.style.width = grapher.params.size + "px";
+			grapher.selector.style.height = grapher.params.size + "px";
+
+			if (grapher.params.label) {
+				//grapher.params.label.style.lineHeight = grapher.params.size + "px";
+			}
+
 			grapher.graphLine = new window.ACGraphDonut(grapher.selector, [{
-                animate: grapher.params.bgAnimate,
-                percent: grapher.params.bgPercent,
-                color: grapher.params.bgColor
-            }, {
-                delay: grapher.params.delay,
-                duration: grapher.params.duration,
-                percent: grapher.params.fillPercent,
-                color: grapher.params.fillColor,
-                label: grapher.params.label
-            }
-            ], {
-                easing: grapher.params.easing,
-                size: grapher.params.size,
-                lineWidth: grapher.params.lineWidth
-            });
+				animate: grapher.params.bgAnimate,
+				percent: grapher.params.bgPercent,
+				color: grapher.params.bgColor
+			}, {
+				delay: grapher.params.delay,
+				duration: grapher.params.duration,
+				percent: grapher.params.fillPercent,
+				color: grapher.params.fillColor,
+				label: grapher.params.label
+			}
+			], {
+				easing: grapher.params.easing,
+				size: grapher.params.size,
+				lineWidth: grapher.params.lineWidth
+			});
 		}
 		if (grapher.params.autoPlay) {
 			grapher.graphLine.play();
+		}
+		grapher.convertToImg = function() {
+			var url = grapher.selector.querySelector("canvas").toDataURL();
+			window.location.href = url;
+		}
+	};
+	window.AppleGrapher.SegmentedDonut = function(selector, options) {
+		var grapher = this;
+
+		grapher.params = {
+			slices: options.slices || null,
+			label: options.label || null,
+			autoPlay: options.autoPlay || true,
+			delay: options.delay || 0,
+			duration: options.duration || 0,
+			gap: options.gap || 0,
+			easing: options.easing || "linear",
+			size: options.size || 235,
+			lineWidth: options.lineWidth || 5
+		};
+		for (var param in options) {
+			grapher.params[param] = options[param];
+		}
+
+		grapher.selector = selector;
+		grapher.graphLine = null;
+
+		grapher.createGraphObject = function(B) {
+			var t = {
+				slices: [{
+					color: "#f0f",
+					value: 1
+				}
+				],
+				totalDuration: 1,
+				gap: 0
+			};
+			B = B || {};
+			t = this.extend(t, B);
+			var s = [];
+			var r = 0;
+			var w = 0;
+			var z = t.gap / 100;
+			var A = t.slices;
+			var y = this.getTotal(A);
+			var x;
+			var u;
+			for (var v = 0; v < A.length; v++) {
+				u = (v === 0);
+				x = A[v].value / y;
+				s[v] = {
+					delay: u ? 0: r,
+					startAngle: u ? 0: (z * v) + (w * 360),
+					duration: x * t.totalDuration,
+					percent: x - z,
+					color: A[v].color
+				};
+				r += s[v].duration;
+				w += x
+			}
+			return s
+		}
+		grapher.getTotal = function(t) {
+			var s = 0;
+			for (var r = 0; r < t.length;
+			r++) {
+				s += t[r].value
+			}
+			return s
+		}
+		grapher.extend = function(t, s) {
+			var r = {};
+			for (var u in t) {
+				r[u] = (s[u] != null) ? s[u] : t[u]
+			}
+			return r
+		}
+
+
+		if (grapher.selector) {
+			grapher.selector.classList.add("donut");
+			grapher.selector.classList.add("segmented-donut");
+			grapher.selector.style.width = grapher.params.size + "px";
+			grapher.selector.style.height = grapher.params.size + "px";
+			if (grapher.params.label) {
+				if (document.querySelector(grapher.params.label.element)) {
+					document.querySelector(grapher.params.label.element).style.lineHeight = grapher.params.size + "px";
+				}
+			}
+
+			var graphObject = grapher.createGraphObject({
+				slices: grapher.params.slices,
+				totalDuration: grapher.params.duration,
+				gap: grapher.params.gap
+			})
+			grapher.graphLine = new window.ACGraphSegmentedDonut(grapher.selector, graphObject, {
+				easing: grapher.params.easing,
+				size: grapher.params.size,
+				lineWidth: grapher.params.lineWidth
+			})
+
+			setTimeout(function() {
+				if (grapher.params.label) {
+					if (document.querySelector(grapher.params.label.element)) {
+						window.ACGraphSegmentedDonut.countUp.initialize([grapher.params.label]);
+					}
+				}
+
+				if (grapher.params.autoPlay) {
+					grapher.graphLine.play();
+				}
+
+			}, grapher.params.delay*1000);
+		}
+		grapher.convertToImg = function() {
+			var url = grapher.selector.querySelector("canvas").toDataURL();
+			window.location.href = url;
 		}
 	}
 })();
 
 
 var ipad_cpu = [{
-    name: "ipad",
-    y: 0.04928571428571
+	name: "ipad",
+	y: 0.04928571428571
 }, {
-    name: "ipad 2",
-    y: 0.19357142857143
+	name: "ipad 2",
+	y: 0.19357142857143
 }, {
-    name: "ipad 3rd gen",
-    y: 0.224
+	name: "ipad 3rd gen",
+	y: 0.224
 }, {
-    name: "ipad 4th gen",
-    y: 0.375
+	name: "ipad 4th gen",
+	y: 0.375
 }, {
-    name: "ipad air",
-    y: 0.71428571428571
+	name: "ipad air",
+	y: 0.71428571428571
 }, {
-    name: "new ipad air",
-    y: 1
-}
-];
+	name: "new ipad air",
+	y: 1
+}];
 
 var ipad_gpu = [{
-    name: "ipad",
-    y: 0.00555555555556 + 0.04373015873015
+	name: "ipad",
+	y: 0.00555555555556 + 0.04373015873015
 }, {
-    name: "ipad 2",
-    y: 0.05 + 0.04373015873015
+	name: "ipad 2",
+	y: 0.05 + 0.04373015873015
 }, {
-    name: "ipad 3rd gen",
-    y: 0.1 + 0.04373015873015
+	name: "ipad 3rd gen",
+	y: 0.1 + 0.04373015873015
 }, {
-    name: "ipad 4th gen",
-    y: 0.2 + 0.04373015873015
+	name: "ipad 4th gen",
+	y: 0.2 + 0.04373015873015
 }, {
-    name: "ipad air",
-    y: 0.5
+	name: "ipad air",
+	y: 0.5
 }, {
-    name: "new ipad air",
-    y: 1
-}
-];
-
-function RGBtoObject(p) {
-    var o = p.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-    return {
-        r: parseInt(o[1], 10),
-        g: parseInt(o[2], 10),
-        b: parseInt(o[3], 10)
-    }
-}
-function getVendorPrefix()
-{
-	if('result' in arguments.callee) return arguments.callee.result;
-
-	var regex = /^(Moz|Webkit|Khtml|O|ms|Icab)(?=[A-Z])/;
-
-	var someScript = document.getElementsByTagName('script')[0];
-
-	for(var prop in someScript.style)
-	{
-		if(regex.test(prop))
-		{
-			// test is faster than match, so it's better to perform
-			// that on the lot and match only when necessary
-			return arguments.callee.result = prop.match(regex)[0];
-		}
-
-	}
-
-	// Nothing found so far? Webkit does not enumerate over the CSS properties of the style object.
-	// However (prop in style) returns the correct value, so we'll have to test for
-	// the precence of a specific property
-	if('WebkitOpacity' in someScript.style) return arguments.callee.result = 'Webkit';
-	if('KhtmlOpacity' in someScript.style) return arguments.callee.result = 'Khtml';
-
-	return arguments.callee.result = '';
-}
+	name: "new ipad air",
+	y: 1
+}];
