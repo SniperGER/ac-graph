@@ -1,27 +1,9 @@
-(function() {
-	var lastTime = 0;
-	var vendors = ['ms', 'moz', 'webkit', 'o'];
-	for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-		window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-		window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
-								   || window[vendors[x]+'CancelRequestAnimationFrame'];
-	}
+window.AppleGrapherOptions = {
+	disableAnimationsOnOldDevices: true,
+	enableElementEngagement: true,
+	decimalMark: ","
+};
 
-	if (!window.requestAnimationFrame)
-		window.requestAnimationFrame = function(callback, element) {
-			var currTime = new Date().getTime();
-			var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-			var id = window.setTimeout(function() { callback(currTime + timeToCall); },
-			  timeToCall);
-			lastTime = currTime + timeToCall;
-			return id;
-		};
-
-	if (!window.cancelAnimationFrame)
-		window.cancelAnimationFrame = function(id) {
-			clearTimeout(id);
-		};
-}());
 (function() {
 	window.AppleGrapher = function(items) {
 		this.graphs = [];
@@ -45,7 +27,8 @@
 
 		grapher.params = {
 			autoPlay: options.autoPlay || true,
-			delay: options.delay || 0,
+			delay: options.delay ||0,
+			duration: options.duration || 2,
 			graphData: options.graphData || null,
 			tension: options.tension || 0.3,
 			splinewidth: options.splinewidth || 4.5,
@@ -70,9 +53,14 @@
 		for (var param in options) {
 			grapher.params[param] = options[param];
 		}
+		if ((window.EnvBrowser.os == "iOS" && window.EnvBrowser.version<7 && window.AppleGrapherOptions && window.AppleGrapherOptions.disableAnimationsOnOldDevices)) {
+			grapher.params.duration = 0;
+			grapher.params.delay = 0;
+		}
 
 		grapher.graphLine = null;
 		grapher.played = false;
+		grapher.elementEngagement = null;
 
 		grapher.play = function() {
 			if (grapher.selector) {
@@ -85,20 +73,29 @@
 				window.addEventListener("orientationchange", function() {
 					grapher.setLabels();
 				});
-
-				if (!grapher.played) {
-					for (p=0, o=grapher.selector_li.length; p<o; p+=1) {
-						var s = grapher.selector_li[p];
-						s.style.webkitTransitionDelay = p * 100 + "ms,0";
-						s.style.transitionDelay = p * 100 + "ms,0";
-						s.style.mozTransitionDelay = p * 100 + "ms,0";
+				
+				grapher.elementEngagement = new window.ACElementEngagement();
+				grapher.elementEngagement.addElement(grapher.selector);
+				grapher.elementEngagement.on("engaged", function() {
+					if (!grapher.played) {
+						if (!(window.EnvBrowser.os == "iOS" && window.EnvBrowser.version<7 && window.AppleGrapherOptions && window.AppleGrapherOptions.disableAnimationsOnOldDevices) && window.AppleGrapherOptions.enableElementEngagement) {
+							setTimeout(function() {
+								grapher.selector.classList.add("play");
+								grapher.graphLine.play();
+							}, grapher.params.delay*1000);
+							grapher.played = true;
+						}
 					}
+				});
+				grapher.elementEngagement.start();
+				if (!window.AppleGrapherOptions.enableElementEngagement) {
 					setTimeout(function() {
 						grapher.selector.classList.add("play");
 						grapher.graphLine.play();
+						grapher.played = true;
 					}, grapher.params.delay*1000);
-					grapher.played = true;
 				}
+
 			}
 		}
 		grapher.setLabels = function() {
@@ -121,9 +118,15 @@
 					label_inner.innerHTML = grapher.params.labels[i];
 					label_inner.style.width = (grapher.selector.offsetWidth/(grapher.params.graphData.length-1)) + "px";
 					label_inner.style.left = i * (label_holder_width/grapher.params.graphData.length)+ "px";
-					label_inner.style.webkitTransitionDelay = i * 100 + "ms,0";
-					label_inner.style.transitionDelay = i * 100 + "ms,0";
-					label_inner.style.mozTransitionDelay = i * 100 + "ms,0";
+					if (window.EnvBrowser.version<7 && (window.AppleGrapherOptions && window.AppleGrapherOptions.disableAnimationsOnOldDevices)) {
+						label_inner.style.transitionDuration = "0ms";
+						label_inner.style.mozTransitionDuration = "0ms";
+						label_inner.style.webkitTransitionDuration = "0ms";
+					} else {
+						label_inner.style.transitionDelay = i * 100 + "ms,0";
+						label_inner.style.webkitTransitionDelay = i * 100 + "ms,0";
+						label_inner.style.mozTransitionDelay = i * 100 + "ms,0";
+					}
 
 					label_holder.appendChild(label_inner);
 				}
@@ -134,6 +137,7 @@
 			var url = grapher.selector.querySelector("canvas").toDataURL();
 			window.location.href = url;
 		}
+
 		if (grapher.params.autoPlay) {
 			grapher.play();
 		}
@@ -158,18 +162,19 @@
 		for (var param in options) {
 			grapher.params[param] = options[param];
 		}
+		if ((window.EnvBrowser.os == "iOS" && window.EnvBrowser.version<7 && window.AppleGrapherOptions && window.AppleGrapherOptions.disableAnimationsOnOldDevices)) {
+			grapher.params.duration = 0;
+			grapher.params.delay = 0;
+		}
 
 		grapher.selector = selector;
 		grapher.graphLine = null;
+		grapher.played = false;
 
 		if (grapher.selector) {
 			grapher.selector.classList.add("donut");
 			grapher.selector.style.width = grapher.params.size + "px";
 			grapher.selector.style.height = grapher.params.size + "px";
-
-			if (grapher.params.label) {
-				//grapher.params.label.style.lineHeight = grapher.params.size + "px";
-			}
 
 			grapher.graphLine = new window.ACGraphDonut(grapher.selector, [{
 				animate: grapher.params.bgAnimate,
@@ -187,9 +192,23 @@
 				size: grapher.params.size,
 				lineWidth: grapher.params.lineWidth
 			});
-		}
-		if (grapher.params.autoPlay) {
-			grapher.graphLine.play();
+
+			grapher.elementEngagement = new window.ACElementEngagement();
+			grapher.elementEngagement.addElement(grapher.selector);
+			grapher.elementEngagement.on("engaged", function() {
+				if (!grapher.played && grapher.params.autoPlay) {
+					if (!(window.EnvBrowser.os == "iOS" && window.EnvBrowser.version<7 && window.AppleGrapherOptions && window.AppleGrapherOptions.disableAnimationsOnOldDevices) && window.AppleGrapherOptions.enableElementEngagement) {
+						grapher.graphLine.play();
+						grapher.played = true;
+					}
+				}
+			});
+			grapher.elementEngagement.start();
+			if (!window.AppleGrapherOptions.enableElementEngagement) {
+				grapher.graphLine.play();
+				grapher.played = true;
+			}
+
 		}
 		grapher.convertToImg = function() {
 			var url = grapher.selector.querySelector("canvas").toDataURL();
@@ -212,6 +231,10 @@
 		};
 		for (var param in options) {
 			grapher.params[param] = options[param];
+		}
+		if ((window.EnvBrowser.os == "iOS" && window.EnvBrowser.version<7 && window.AppleGrapherOptions && window.AppleGrapherOptions.disableAnimationsOnOldDevices)) {
+			grapher.params.duration = 0;
+			grapher.params.delay = 0;
 		}
 
 		grapher.selector = selector;
@@ -268,7 +291,6 @@
 			return r
 		}
 
-
 		if (grapher.selector) {
 			grapher.selector.classList.add("donut");
 			grapher.selector.classList.add("segmented-donut");
@@ -290,19 +312,41 @@
 				size: grapher.params.size,
 				lineWidth: grapher.params.lineWidth
 			})
+			grapher.elementEngagement = new window.ACElementEngagement();
+			grapher.elementEngagement.addElement(grapher.selector);
+			grapher.elementEngagement.on("engaged", function() {
+				if (!grapher.played && grapher.params.autoPlay) {
+					if (!(window.EnvBrowser.os == "iOS" && window.EnvBrowser.version<7 && window.AppleGrapherOptions && window.AppleGrapherOptions.disableAnimationsOnOldDevices) && window.AppleGrapherOptions.enableElementEngagement) {
+						setTimeout(function() {
+							if (grapher.params.label) {
+								if (document.querySelector(grapher.params.label.element)) {
+									window.ACGraphSegmentedDonut.countUp.initialize([{
+										duration: grapher.params.duration,
+										delay: 0,
+										finalNumber: grapher.params.label.finalNumber,
+										element: grapher.params.label.element
+									}]);
+								}
+							}	
+							if (grapher.params.autoPlay) {
+								grapher.graphLine.play();
+								grapher.played = true;
+							}
+						}, grapher.params.delay*1000);
 
-			setTimeout(function() {
-				if (grapher.params.label) {
-					if (document.querySelector(grapher.params.label.element)) {
-						window.ACGraphSegmentedDonut.countUp.initialize([grapher.params.label]);
 					}
 				}
-
-				if (grapher.params.autoPlay) {
-					grapher.graphLine.play();
-				}
-
-			}, grapher.params.delay*1000);
+			});
+			if (!window.AppleGrapherOptions.enableElementEngagement) {
+				window.ACGraphSegmentedDonut.countUp.initialize([{
+					duration: grapher.params.duration,
+					delay: 0,
+					finalNumber: grapher.params.label.finalNumber,
+					element: grapher.params.label.element
+				}]);
+				grapher.graphLine.play();
+				grapher.played = true;
+			}
 		}
 		grapher.convertToImg = function() {
 			var url = grapher.selector.querySelector("canvas").toDataURL();
@@ -311,6 +355,30 @@
 	}
 })();
 
+(function() {
+	var lastTime = 0;
+	var vendors = ['ms', 'moz', 'webkit', 'o'];
+	for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+		window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+		window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+								   || window[vendors[x]+'CancelRequestAnimationFrame'];
+	}
+
+	if (!window.requestAnimationFrame)
+		window.requestAnimationFrame = function(callback, element) {
+			var currTime = new Date().getTime();
+			var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+			var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+				 timeToCall);
+			lastTime = currTime + timeToCall;
+			return id;
+		};
+
+	if (!window.cancelAnimationFrame)
+		window.cancelAnimationFrame = function(id) {
+			clearTimeout(id);
+		};
+}());
 
 var ipad_cpu = [{
 	name: "ipad",

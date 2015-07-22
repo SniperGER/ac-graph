@@ -3,15 +3,15 @@
 ## Usage
 Include `Base.js`, `AppleGrapher.js` and `AppleGrapherElements.js` in this order before the closing `</body>` tag of your document.
 
-You also have the options to use the ultra-minified version with `AppleGrapher.min.js`.
+You also have the options to use the ultra-minified version with `AppleGrapher.min.js`. Be advised that this library weighs slightly more than 200 KB.
 
 To use labels, you also need to include `AppleGrapher.css`.
 
 
 ```html
 <body>
-	<div class="chart chart1"  style="width: 418px; height: 240px"></div>
-	<div class="chart chart2"  style="width: 418px; height: 240px"></div>
+	<div class="chart chart1"></div>
+	<div class="chart chart2"></div>
 	<div class="donut chart3">
 		<div class="donut-label">
 			<span class="label">0</span>
@@ -201,8 +201,6 @@ Example data is included in the variables `ipad_cpu` and `ipad_gpu`.
 | size      | integer   | Sets the canvas width and height.                                                                    | 235           |
 | lineWidth | float     | Sets the width of the slices                                                                         | 5             |
 
-
-
 ## Labels
 
 
@@ -241,7 +239,7 @@ Add the following code to your donut holder. There is no need to customize it, o
 
 To export a graph as an image, call the `convertToImg()` method. This will convert the canvas to a PNG image and sets the current browser location to the data URI. From there you can save the image.
 
-Graphs are stored inside a variable called `graphs` in the AppleGrapher object, in the order in which you initialized the graphs. For example if you only have on graph, it will be stored at index `0`.
+Graphs are stored inside a variable called `graphs` in the AppleGrapher object, in the order in which you initialized the graphs. For example if you only have one graph, it will be stored at index `0`.
 
 ```javascript
 var demo = new AppleGrapher([demo_options_curvedLine_cpu]);
@@ -249,6 +247,7 @@ var demo = new AppleGrapher([demo_options_curvedLine_cpu]);
 demo.graphs[0].convertToImg();
 // Converts the selected graph to a PNG image
 ```
+
 Labels are currently not included in exported images.
 
 ## Easing Functions
@@ -277,6 +276,32 @@ These are the easing functions supported by AppleGrapher:
 | easeInQuint     | YES       |                  |           |
 | easeOutQuint    | YES       |                  |           |
 | easeInOutQuint  | YES       |                  |           |
+
+## Other options
+### ElementEngagement
+
+`ac-element-engagement` is responsible for triggering actions when something enters the view. Release 3.1 configures graphs to be triggered only when they are visible in a certain threshold. This can be disabled using
+
+```javascript
+window.AppleGrapherOptions.enableElementEngagement = false;
+```
+
+`ac-element-engagement` will be available as a standalone library soon.
+
+### Instant Rendering
+Instand Rendering disables animations on devices with iOS 6 or older. This option is enabled by default, but can be disabled using
+
+```javascript
+window.AppleGrapherOptions.disableAnimationsOnOldDevices = false;
+```
+
+### Decimal Mark
+The SegmentedDonut splits its labels by thousands using a regional decimal mark. By default, the mark is set to US American Number Format (or `,`).
+You can set this decimal mark to whatever you want by using
+
+```javascript
+window.AppleGrapherOptions.decimalMark = ",";
+```
 
 ## Credits
 * Apple - For their work on `head.built.js`, `performance.built.js` and `overview.built.js`
